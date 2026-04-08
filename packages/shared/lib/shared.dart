@@ -1,7 +1,12 @@
 library shared;
 
-export 'models/models.dart';
-export 'services/services.dart';
-export 'bloc/bloc.dart';
-export 'widgets/widgets.dart';
+// Clean Architecture layers
+export 'domain/domain.dart';
+export 'data/data.dart';
+export 'presentation/presentation.dart';
+
+// Cross-cutting
 export 'utils/utils.dart';
+export 'services/log_service.dart';
+export 'services/storage_service.dart';
+export 'services/auth_service.dart';
