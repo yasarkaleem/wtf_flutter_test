@@ -1,0 +1,57 @@
+Running `(cd /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/; TMPDIR=/var/folders/3q/_n9knwqx267cncpfcn_47pjm0000gn/T/ PATH=/Users/yasarkaleem/.local/bin:/Users/yasarkaleem/.antigravity/antigravity/bin:/Users/yasarkaleem/.nvm/versions/node/v22.20.0/bin:/Users/yasarkaleem/.rbenv/shims:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/Users/yasarkaleem/Develop/flutter/bin:/Users/yasarkaleem/.rvm/bin:/Users/yasarkaleem/.pub-cache/bin HOME=/Users/yasarkaleem /Users/yasarkaleem/Develop/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/package_config.json /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/objective_c/7ad245dadc068daf8ba9d7bb51a8ef8e/hook.dill --config=/Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/objective_c/7ad245dadc068daf8ba9d7bb51a8ef8e/input.json )`.
+INFO: 2026-04-09 00:04:04.535535: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-04-09 00:04:04.658133: Running `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --version`.
+
+INFO: 2026-04-09 00:04:04.674500: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/include/dart_api_dl.c -fpic -I src -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-04-09 00:04:04.674776: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.c -fpic -I src -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c.c.o
+
+INFO: 2026-04-09 00:04:04.674935: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/test/util.c -fpic -I src -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/test/util.c.o
+
+INFO: 2026-04-09 00:04:04.675114: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c.m -fpic -I src -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c.m.o
+
+ream_adapter.m.o
+
+INFO: 2026-04-09 00:04:04.675282: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/ns_number.m -fpic -I src -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/ns_number.m.o
+
+INFO: 2026-04-09 00:04:04.675469: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/protocol.m -fpic -I src -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/protocol.m.o
+
+INFO: 2026-04-09 00:04:04.675574: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/yasarkaleem/.pub-cache/hosted/pub.dev/objective_c-9.3.0/src/objective_c_bindings_generated.m -fpic -I src -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-04-09 00:04:04.794676: 
+INFO: 2026-04-09 00:04:04.794738: 
+INFO: 2026-04-09 00:04:04.794765: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/include/dart_api_dl.c.o
+
+INFO: 2026-04-09 00:04:04.795101: 
+INFO: 2026-04-09 00:04:04.795113: 
+INFO: 2026-04-09 00:04:04.795121: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/test/util.c.o
+
+.c.o
+
+INFO: 2026-04-09 00:04:04.798218: 
+INFO: 2026-04-09 00:04:04.798240: 
+INFO: 2026-04-09 00:04:04.798251: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/observer.m.o
+
+INFO: 2026-04-09 00:04:04.803255: 
+INFO: 2026-04-09 00:04:04.803280: 
+INFO: 2026-04-09 00:04:04.803290: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/protocol.m.o
+
+INFO: 2026-04-09 00:04:05.036876: 
+INFO: 2026-04-09 00:04:05.036910: 
+INFO: 2026-04-09 00:04:05.036920: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/ns_number.m.o
+
+INFO: 2026-04-09 00:04:05.046158: 
+INFO: 2026-04-09 00:04:05.046169: 
+INFO: 2026-04-09 00:04:05.046179: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/input_stream_adapter.m.o
+
+INFO: 2026-04-09 00:04:05.056180: 
+INFO: 2026-04-09 00:04:05.056208: 
+INFO: 2026-04-09 00:04:05.056219: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c_bindings_generated.m.o
+
+INFO: 2026-04-09 00:04:05.056481: Running: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk -target arm64-apple-darwin -mmacos-version-min=13 /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/include/dart_api_dl.c.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c.c.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/test/util.c.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/input_stream_adapter.m.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c.m.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/observer.m.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/ns_number.m.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/protocol.m.o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/obj/src/objective_c_bindings_generated.m.o -o /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/objective_c.dylib
+
+INFO: 2026-04-09 00:04:05.178495: 
+INFO: 2026-04-09 00:04:05.178536: 
+INFO: 2026-04-09 00:04:05.178556: Generated /Users/yasarkaleem/Developer/wtf_flutter_test/packages/shared/.dart_tool/hooks_runner/shared/objective_c/build/7ad245dadc/objective_c.dylib
+
