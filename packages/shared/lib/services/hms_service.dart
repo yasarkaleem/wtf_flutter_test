@@ -172,7 +172,7 @@ class HmsService implements HMSUpdateListener, HMSActionResultListener {
   void onHMSError({required HMSException error}) {
     LogService.instance.error(
       AppConstants.tagRtc,
-      'HMS error [${error.code}]: ${error.message ?? ''} ${error.description ?? ''}',
+      'HMS error [${error.code}]: ${error.message ?? ''} ${error.description}',
     );
     _errorController.add(error);
   }
