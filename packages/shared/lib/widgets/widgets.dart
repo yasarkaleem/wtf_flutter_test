@@ -7,3 +7,5 @@ export 'loading_skeleton.dart';
 export 'empty_state.dart';
 export 'dev_panel.dart';
 export 'avatar_widget.dart';
+export 'onboarding_screen.dart';
+export 'splash_screen.dart';
