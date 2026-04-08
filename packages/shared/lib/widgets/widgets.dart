@@ -9,3 +9,4 @@ export 'dev_panel.dart';
 export 'avatar_widget.dart';
 export 'onboarding_screen.dart';
 export 'splash_screen.dart';
+export 'call_badge_icon.dart';

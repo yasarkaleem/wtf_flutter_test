@@ -197,14 +197,19 @@ class ScheduleCard extends StatelessWidget {
               child: const Text('Cancel'),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: onJoinCall,
-              icon: const Icon(Icons.videocam, size: 18),
-              label: const Text('Join Call'),
+          if (schedule.isJoinable) ...[
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: onJoinCall,
+                icon: const Icon(Icons.videocam, size: 18),
+                label: const Text('Join Call'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.success,
+                ),
+              ),
             ),
-          ),
+          ],
         ],
       );
     }

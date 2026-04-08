@@ -79,9 +79,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.videocam_outlined),
-            onPressed: () {
+          CallBadgeIcon(
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(

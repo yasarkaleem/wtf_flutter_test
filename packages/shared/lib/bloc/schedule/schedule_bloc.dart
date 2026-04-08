@@ -64,6 +64,10 @@ class SchedulesUpdated extends ScheduleEvent {
   List<Object?> get props => [schedules];
 }
 
+class _ScheduleTick extends ScheduleEvent {
+  const _ScheduleTick();
+}
+
 // States
 class ScheduleState extends Equatable {
   final List<Schedule> schedules;
@@ -74,6 +78,7 @@ class ScheduleState extends Equatable {
   final bool isLoading;
   final String? error;
   final String? successMessage;
+  final int version;
 
   const ScheduleState({
     this.schedules = const [],
@@ -84,6 +89,7 @@ class ScheduleState extends Equatable {
     this.isLoading = false,
     this.error,
     this.successMessage,
+    this.version = 0,
   });
 
   List<Schedule> get pendingSchedules =>
@@ -96,6 +102,13 @@ class ScheduleState extends Equatable {
           .toList()
         ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
 
+  /// The nearest approved call that starts within 10 minutes (or ongoing).
+  Schedule? get imminentCall {
+    final joinable = schedules.where((s) => s.isJoinable).toList()
+      ..sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    return joinable.isNotEmpty ? joinable.first : null;
+  }
+
   ScheduleState copyWith({
     List<Schedule>? schedules,
     List<DateTime>? availableDays,
@@ -105,6 +118,7 @@ class ScheduleState extends Equatable {
     bool? isLoading,
     String? error,
     String? successMessage,
+    int? version,
   }) {
     return ScheduleState(
       schedules: schedules ?? this.schedules,
@@ -115,19 +129,22 @@ class ScheduleState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       error: error,
       successMessage: successMessage,
+      version: version ?? this.version,
     );
   }
 
   @override
   List<Object?> get props => [
         schedules, availableDays, availableSlots,
-        selectedDay, selectedSlot, isLoading, error, successMessage,
+        selectedDay, selectedSlot, isLoading, error, successMessage, version,
       ];
 }
 
 // BLoC
 class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   StreamSubscription? _scheduleSubscription;
+  Timer? _ticker;
+  int _version = 0;
 
   ScheduleBloc() : super(const ScheduleState()) {
     on<ScheduleLoad>(_onLoad);
@@ -138,9 +155,16 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     on<ScheduleSelectDay>(_onSelectDay);
     on<ScheduleSelectSlot>(_onSelectSlot);
     on<SchedulesUpdated>(_onUpdated);
+    on<_ScheduleTick>(_onTick);
 
     _scheduleSubscription = ScheduleService.instance.scheduleStream.listen(
       (schedules) => add(SchedulesUpdated(schedules)),
+    );
+
+    // Re-evaluate isJoinable every 30 seconds
+    _ticker = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => add(const _ScheduleTick()),
     );
   }
 
@@ -249,12 +273,18 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
   }
 
   void _onUpdated(SchedulesUpdated event, Emitter<ScheduleState> emit) {
-    emit(state.copyWith(schedules: event.schedules));
+    emit(state.copyWith(schedules: event.schedules, version: ++_version));
+  }
+
+  /// Periodic tick to re-evaluate time-sensitive getters (isJoinable).
+  void _onTick(_ScheduleTick event, Emitter<ScheduleState> emit) {
+    emit(state.copyWith(version: ++_version));
   }
 
   @override
   Future<void> close() {
     _scheduleSubscription?.cancel();
+    _ticker?.cancel();
     return super.close();
   }
 }

@@ -72,6 +72,15 @@ class Schedule extends Equatable {
 
   bool get isPast => scheduledAt.isBefore(DateTime.now());
 
+  /// True when the call is approved and starts within the next 10 minutes
+  /// (or has already started but not yet ended).
+  bool get isJoinable {
+    if (status != 'approved') return false;
+    final now = DateTime.now();
+    final startsIn = scheduledAt.difference(now);
+    return startsIn.inMinutes <= 10 && now.isBefore(endTime);
+  }
+
   bool conflictsWith(Schedule other) {
     return scheduledAt.isBefore(other.endTime) &&
         endTime.isAfter(other.scheduledAt);
