@@ -37,7 +37,9 @@ class AppConstants {
   // iOS simulator: use 'localhost'
   // Android emulator: use '10.0.2.2'
   // Physical device: use your Mac's local IP (e.g. 192.168.x.x)
-  static const String _host = 'localhost';
+  // Physical device: use Mac's local IP
+  // Simulator: 'localhost' also works
+  static const String _host = '192.168.1.90';
   static const String serverUrl = 'http://$_host:3000';
   static const String wsServerUrl = 'ws://$_host:3000';
   static const String hmsTokenServerUrl = 'http://$_host:3000';

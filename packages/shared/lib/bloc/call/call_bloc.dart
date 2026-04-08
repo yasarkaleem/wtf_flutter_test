@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:hmssdk_flutter/hmssdk_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../services/services.dart';
 import '../../utils/constants.dart';
 
@@ -187,6 +188,15 @@ class CallBloc extends Bloc<CallEvent, CallBlocState> {
     try {
       final user = AuthService.instance.currentUser;
       if (user == null) throw Exception('Not authenticated');
+
+      // Request camera + mic permissions
+      await [
+        Permission.camera,
+        Permission.microphone,
+        Permission.phone,
+        Permission.bluetoothConnect,
+      ].request();
+      LogService.instance.log(AppConstants.tagRtc, 'Permissions requested');
 
       // Build SDK
       await HmsService.instance.build();

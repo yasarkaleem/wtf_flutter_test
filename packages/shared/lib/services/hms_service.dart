@@ -19,10 +19,8 @@ class HmsService implements HMSUpdateListener, HMSActionResultListener {
   final _onJoinController = StreamController<HMSRoom>.broadcast();
   final _peerUpdateController =
       StreamController<({HMSPeer peer, HMSPeerUpdate update})>.broadcast();
-  final _trackUpdateController =
-      StreamController<
-          ({HMSTrack track, HMSTrackUpdate update, HMSPeer peer})>
-          .broadcast();
+  final _trackUpdateController = StreamController<
+      ({HMSTrack track, HMSTrackUpdate update, HMSPeer peer})>.broadcast();
   final _errorController = StreamController<HMSException>.broadcast();
   final _messageController = StreamController<HMSMessage>.broadcast();
   final _reconnectController = StreamController<bool>.broadcast();
@@ -37,48 +35,65 @@ class HmsService implements HMSUpdateListener, HMSActionResultListener {
 
   HMSSDK? get sdk => _hmsSdk;
 
-  /// Build and initialize the SDK.
+  /// Build and initialize the SDK with camera+mic permissions.
   Future<void> build() async {
     if (_isInitialized) return;
 
-    _hmsSdk = HMSSDK();
+    _hmsSdk = HMSSDK(
+      hmsTrackSetting: HMSTrackSetting(
+        audioTrackSetting: HMSAudioTrackSetting(),
+        videoTrackSetting: HMSVideoTrackSetting(),
+      ),
+    );
     await _hmsSdk!.build();
     _hmsSdk!.addUpdateListener(listener: this);
     _isInitialized = true;
     LogService.instance.log(AppConstants.tagRtc, 'HMSSDK built');
   }
 
-  /// Fetch auth token from token server.
+
+  /// Get an auth token using the room-code flow.
+  ///
+  /// 1. Fetch a room code from our token server
+  /// 2. Pass it to HMSSDK.getAuthTokenByRoomCode() which handles
+  ///    permissions and returns a valid auth token.
   Future<String> getAuthToken({
     required String roomId,
     required String userId,
     required String role,
   }) async {
-    LogService.instance.log(
-      AppConstants.tagRtc,
-      'Fetching token for role: $role',
-    );
+    LogService.instance.log(AppConstants.tagRtc, 'Fetching room code for role: $role');
 
     try {
+      // Step 1: Get room code from our server
       final response = await http
           .post(
-            Uri.parse('${AppConstants.hmsTokenServerUrl}/api/token'),
+            Uri.parse('${AppConstants.hmsTokenServerUrl}/api/room-code'),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'room_id': roomId,
-              'user_id': userId,
-              'role': role,
-            }),
+            body: jsonEncode({'role': role}),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token = data['token'] as String;
-        LogService.instance.log(AppConstants.tagRtc, 'Token received');
-        return token;
+      if (response.statusCode != 200) {
+        final body = jsonDecode(response.body);
+        throw Exception(body['error'] ?? 'Server returned ${response.statusCode}');
       }
-      throw Exception('Token server returned ${response.statusCode}');
+
+      final data = jsonDecode(response.body);
+      final roomCode = data['room_code'] as String;
+      LogService.instance.log(AppConstants.tagRtc, 'Room code received');
+
+      // Step 2: Exchange room code for auth token via the SDK
+      final tokenResult = await _hmsSdk!.getAuthTokenByRoomCode(roomCode: roomCode);
+
+      if (tokenResult is String) {
+        LogService.instance.log(AppConstants.tagRtc, 'Auth token received');
+        return tokenResult;
+      } else if (tokenResult is HMSException) {
+        throw Exception('${tokenResult.message} ${tokenResult.description}');
+      }
+
+      throw Exception('Unexpected token result: $tokenResult');
     } catch (e) {
       LogService.instance.error(AppConstants.tagRtc, 'Token fetch failed', e);
       rethrow;
@@ -201,8 +216,7 @@ class HmsService implements HMSUpdateListener, HMSActionResultListener {
   void onUpdateSpeakers({required List<HMSSpeaker> updateSpeakers}) {}
 
   @override
-  void onRoleChangeRequest(
-      {required HMSRoleChangeRequest roleChangeRequest}) {}
+  void onRoleChangeRequest({required HMSRoleChangeRequest roleChangeRequest}) {}
 
   @override
   void onChangeTrackStateRequest(
@@ -218,8 +232,7 @@ class HmsService implements HMSUpdateListener, HMSActionResultListener {
       List<HMSAudioDevice>? availableAudioDevice}) {}
 
   @override
-  void onSessionStoreAvailable(
-      {HMSSessionStore? hmsSessionStore}) {}
+  void onSessionStoreAvailable({HMSSessionStore? hmsSessionStore}) {}
 
   @override
   void onPeerListUpdate(
@@ -233,8 +246,7 @@ class HmsService implements HMSUpdateListener, HMSActionResultListener {
     }
     for (final peer in removedPeers) {
       if (!peer.isLocal) {
-        _peerUpdateController
-            .add((peer: peer, update: HMSPeerUpdate.peerLeft));
+        _peerUpdateController.add((peer: peer, update: HMSPeerUpdate.peerLeft));
       }
     }
   }

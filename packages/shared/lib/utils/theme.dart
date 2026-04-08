@@ -10,30 +10,44 @@ class AppTheme {
 
   // Trainer theme - Red
   static const Color trainerPrimary = Color(0xFFE50914);
-  static const Color trainerPrimaryLight = Color(0xFFFF5252);
-  static const Color trainerPrimaryDark = Color(0xFFB71C1C);
+  static const Color trainerPrimaryLight = Color(0xFFFF4D4D);
+  static const Color trainerPrimaryDark = Color(0xFFB00710);
 
-  // Shared colors
-  static const Color surface = Color(0xFFF8F9FA);
+  // Neutral greys
+  static const Color grey50 = Color(0xFFF9FAFB);
+  static const Color grey100 = Color(0xFFF2F4F7);
+  static const Color grey200 = Color(0xFFEAECF0);
+  static const Color grey300 = Color(0xFFD0D5DD);
+  static const Color grey400 = Color(0xFF98A2B3);
+  static const Color grey500 = Color(0xFF667085);
+  static const Color grey600 = Color(0xFF475467);
+  static const Color grey700 = Color(0xFF344054);
+  static const Color grey800 = Color(0xFF1D2939);
+  static const Color grey900 = Color(0xFF101828);
+
+  // Semantic colors
+  static const Color success = Color(0xFF12B76A);
+  static const Color warning = Color(0xFFF79009);
+  static const Color error = Color(0xFFD92D20);
+  static const Color info = Color(0xFF1769E0);
+
+  // Mapped aliases (used throughout the app)
+  static const Color surface = grey50;
   static const Color background = Colors.white;
   static const Color cardBackground = Colors.white;
-  static const Color textPrimary = Color(0xFF1A1A2E);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textTertiary = Color(0xFF9CA3AF);
-  static const Color divider = Color(0xFFE5E7EB);
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
-  static const Color info = Color(0xFF3B82F6);
+  static const Color textPrimary = grey900;
+  static const Color textSecondary = grey500;
+  static const Color textTertiary = grey400;
+  static const Color divider = grey200;
 
   // Chat colors
   static const Color chatBubbleSent = Color(0xFF1769E0);
-  static const Color chatBubbleReceived = Color(0xFFF3F4F6);
+  static const Color chatBubbleReceived = grey100;
   static const Color chatBubbleSentText = Colors.white;
-  static const Color chatBubbleReceivedText = Color(0xFF1A1A2E);
+  static const Color chatBubbleReceivedText = grey900;
   static const Color systemMessageBg = Color(0xFFFEF3C7);
 
-  // Spacing
+  // Spacing (8pt grid)
   static const double sp1 = 8.0;
   static const double sp2 = 16.0;
   static const double sp3 = 24.0;
@@ -60,12 +74,17 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Inter',
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: primary,
+      colorScheme: ColorScheme.light(
         primary: primary,
+        onPrimary: Colors.white,
         secondary: primaryLight,
+        onSecondary: Colors.white,
         surface: surface,
+        onSurface: textPrimary,
         error: error,
+        onError: Colors.white,
+        outline: grey300,
+        outlineVariant: grey200,
       ),
       scaffoldBackgroundColor: surface,
       appBarTheme: AppBarTheme(
@@ -85,7 +104,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          side: const BorderSide(color: divider, width: 1),
+          side: const BorderSide(color: grey200, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -115,28 +134,43 @@ class AppTheme {
           ),
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primary,
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusSm),
-          borderSide: const BorderSide(color: divider),
+          borderSide: const BorderSide(color: grey300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusSm),
-          borderSide: const BorderSide(color: divider),
+          borderSide: const BorderSide(color: grey300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusSm),
           borderSide: BorderSide(color: primary, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusSm),
+          borderSide: const BorderSide(color: error),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: const TextStyle(color: grey400, fontSize: 14),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: surface,
-        selectedColor: primary.withValues(alpha: 0.15),
-        labelStyle: const TextStyle(fontSize: 13),
-        side: const BorderSide(color: divider),
+        backgroundColor: Colors.white,
+        selectedColor: primary.withValues(alpha: 0.1),
+        labelStyle: const TextStyle(fontSize: 13, color: grey700),
+        side: const BorderSide(color: grey300),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusFull),
         ),
@@ -145,12 +179,21 @@ class AppTheme {
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: primary,
-        unselectedItemColor: textTertiary,
+        unselectedItemColor: grey400,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
+        selectedLabelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 12,
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: textPrimary,
+        backgroundColor: grey800,
         contentTextStyle: const TextStyle(color: Colors.white),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -158,9 +201,12 @@ class AppTheme {
         ),
       ),
       dividerTheme: const DividerThemeData(
-        color: divider,
+        color: grey200,
         thickness: 1,
         space: 0,
+      ),
+      listTileTheme: const ListTileThemeData(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
     );
   }

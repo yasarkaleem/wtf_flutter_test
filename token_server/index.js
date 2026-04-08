@@ -154,6 +154,76 @@ app.get('/api/room-id', (req, res) => {
   res.json({ room_id: HMS_ROOM_ID });
 });
 
+/**
+ * Get a room code for a given role.
+ * The Flutter SDK uses room codes via getAuthTokenByRoomCode()
+ * which also handles permission requests on Android/iOS.
+ */
+app.post('/api/room-code', async (req, res) => {
+  const { role } = req.body;
+
+  if (!role) {
+    return res.status(400).json({ error: 'Missing role' });
+  }
+
+  const actualRoomId = HMS_ROOM_ID || process.env.HMS_ROOM_ID;
+  if (!actualRoomId) {
+    return res.status(500).json({ error: 'No room ID available' });
+  }
+
+  try {
+    const mgmtToken = generateManagementToken();
+
+    // Enable the room first
+    await fetch(`https://api.100ms.live/v2/rooms/${actualRoomId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${mgmtToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ enabled: true }),
+    });
+
+    // Get room codes
+    const codeRes = await fetch(
+      `https://api.100ms.live/v2/room-codes/room/${actualRoomId}`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${mgmtToken}` },
+      }
+    );
+
+    if (!codeRes.ok) {
+      const errText = await codeRes.text();
+      console.error(`[100MS] Room code fetch failed: ${codeRes.status} ${errText}`);
+      return res.status(500).json({ error: 'Failed to get room code' });
+    }
+
+    const codeData = await codeRes.json();
+    const codes = codeData.data || [];
+
+    // Find code matching the requested role
+    const match = codes.find((c) => c.role === role && c.enabled);
+    if (!match) {
+      // Return any enabled code as fallback
+      const fallback = codes.find((c) => c.enabled);
+      if (fallback) {
+        console.log(`[TOKEN] Role '${role}' not found, using '${fallback.role}' code`);
+        return res.json({ room_code: fallback.code, role: fallback.role });
+      }
+      return res.status(404).json({
+        error: `No room code for role '${role}'. Available roles: ${codes.map((c) => c.role).join(', ')}`,
+      });
+    }
+
+    console.log(`[TOKEN] Room code for ${role}: ${match.code}`);
+    res.json({ room_code: match.code, role: match.role });
+  } catch (err) {
+    console.error('[100MS] Room code error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
