@@ -10,49 +10,148 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ─── HTTP / REST ────────────────────────────────────────────────
+// ─── Config ─────────────────────────────────────────────────
 
 const HMS_ACCESS_KEY = process.env.HMS_ACCESS_KEY || 'your_access_key';
 const HMS_SECRET = process.env.HMS_SECRET || 'your_secret_key';
 
-app.post('/api/token', (req, res) => {
-  const { room_id, user_id, role } = req.body;
+// Will be set after room creation
+let HMS_ROOM_ID = null;
 
-  if (!room_id || !user_id || !role) {
-    return res.status(400).json({
-      error: 'Missing required fields: room_id, user_id, role',
-    });
-  }
+// ─── 100ms Helpers ──────────────────────────────────────────
 
-  const validRoles = ['trainer', 'member'];
-  if (!validRoles.includes(role)) {
-    return res.status(400).json({
-      error: `Invalid role. Must be one of: ${validRoles.join(', ')}`,
-    });
-  }
-
-  try {
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
+function generateManagementToken() {
+  const now = Math.floor(Date.now() / 1000);
+  return jwt.sign(
+    {
       access_key: HMS_ACCESS_KEY,
-      room_id,
-      user_id,
-      role,
+      type: 'management',
+      version: 2,
+      iat: now,
+      nbf: now,
+      exp: now + 86400,
+      jti: uuidv4(),
+    },
+    HMS_SECRET,
+    { algorithm: 'HS256' }
+  );
+}
+
+function generateAuthToken(roomId, userId, role) {
+  const now = Math.floor(Date.now() / 1000);
+  return jwt.sign(
+    {
+      access_key: HMS_ACCESS_KEY,
+      room_id: roomId,
+      user_id: userId,
+      role: role,
       type: 'app',
       version: 2,
       iat: now,
       nbf: now,
       exp: now + 86400,
       jti: uuidv4(),
-    };
+    },
+    HMS_SECRET,
+    { algorithm: 'HS256' }
+  );
+}
 
-    const token = jwt.sign(payload, HMS_SECRET, { algorithm: 'HS256' });
-    console.log(`[TOKEN] Generated for user=${user_id} role=${role}`);
-    res.json({ token });
+/**
+ * Create a room on 100ms with 'trainer' and 'member' roles.
+ * Uses the 100ms REST API.
+ */
+async function createRoom() {
+  const mgmtToken = generateManagementToken();
+
+  try {
+    // First try to list existing rooms to find ours
+    const listRes = await fetch('https://api.100ms.live/v2/rooms?limit=10', {
+      headers: { Authorization: `Bearer ${mgmtToken}` },
+    });
+
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const existing = listData.data?.find(
+        (r) => r.name === 'guru-trainer-session'
+      );
+      if (existing) {
+        HMS_ROOM_ID = existing.id;
+        console.log(`[100MS] Using existing room: ${HMS_ROOM_ID}`);
+        return;
+      }
+    }
+
+    // Create a new room
+    const createRes = await fetch('https://api.100ms.live/v2/rooms', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${mgmtToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: 'guru-trainer-session',
+        description: 'Guru-Trainer video call room',
+        template_id: null, // uses default template
+      }),
+    });
+
+    if (createRes.ok) {
+      const room = await createRes.json();
+      HMS_ROOM_ID = room.id;
+      console.log(`[100MS] Room created: ${HMS_ROOM_ID}`);
+    } else {
+      const errText = await createRes.text();
+      console.error(`[100MS] Room creation failed: ${createRes.status} ${errText}`);
+      console.error('[100MS] You may need to create a room manually at https://dashboard.100ms.live');
+      console.error('[100MS] Then set HMS_ROOM_ID in .env');
+      HMS_ROOM_ID = process.env.HMS_ROOM_ID || null;
+    }
+  } catch (err) {
+    console.error('[100MS] API error:', err.message);
+    HMS_ROOM_ID = process.env.HMS_ROOM_ID || null;
+  }
+}
+
+// ─── HTTP / REST ────────────────────────────────────────────
+
+app.post('/api/token', (req, res) => {
+  const { room_id, user_id, role } = req.body;
+
+  if (!user_id || !role) {
+    return res.status(400).json({
+      error: 'Missing required fields: user_id, role',
+    });
+  }
+
+  const validRoles = ['host', 'guest', 'trainer', 'member'];
+  if (!validRoles.includes(role)) {
+    return res.status(400).json({
+      error: `Invalid role. Must be one of: ${validRoles.join(', ')}`,
+    });
+  }
+
+  // Use the auto-created room ID, or the one from the request, or from env
+  const actualRoomId = HMS_ROOM_ID || room_id || process.env.HMS_ROOM_ID;
+
+  if (!actualRoomId) {
+    return res.status(500).json({
+      error: 'No room ID available. Create a room at https://dashboard.100ms.live and set HMS_ROOM_ID in .env',
+    });
+  }
+
+  try {
+    const token = generateAuthToken(actualRoomId, user_id, role);
+    console.log(`[TOKEN] Generated for user=${user_id} role=${role} room=${actualRoomId}`);
+    res.json({ token, room_id: actualRoomId });
   } catch (error) {
     console.error('[TOKEN] Generation failed:', error.message);
     res.status(500).json({ error: 'Token generation failed' });
   }
+});
+
+app.get('/api/room-id', (req, res) => {
+  res.json({ room_id: HMS_ROOM_ID });
 });
 
 app.get('/health', (req, res) => {
@@ -60,15 +159,15 @@ app.get('/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     clients: clients.size,
+    hms_room_id: HMS_ROOM_ID,
   });
 });
 
-// ─── WebSocket Relay ────────────────────────────────────────────
+// ─── WebSocket Relay ────────────────────────────────────────
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-// userId → WebSocket
 const clients = new Map();
 
 wss.on('connection', (ws) => {
@@ -82,25 +181,19 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    // First message must be a register event
     if (msg.type === 'register') {
       userId = msg.userId;
       clients.set(userId, ws);
       console.log(`[WS] Registered: ${userId}  (${clients.size} online)`);
-
-      // Tell all clients about online status
       broadcast(
         { type: 'presence', data: { userId, isOnline: true } },
-        userId,
+        userId
       );
       return;
     }
 
-    if (!userId) return; // not registered yet
-
+    if (!userId) return;
     console.log(`[WS] ${userId} → ${msg.type}`);
-
-    // Relay to every OTHER connected client
     broadcast(msg, userId);
   });
 
@@ -110,7 +203,7 @@ wss.on('connection', (ws) => {
       console.log(`[WS] Disconnected: ${userId}  (${clients.size} online)`);
       broadcast(
         { type: 'presence', data: { userId, isOnline: false } },
-        userId,
+        userId
       );
     }
   });
@@ -129,11 +222,26 @@ function broadcast(msg, excludeUserId) {
   }
 }
 
-// ─── Start ──────────────────────────────────────────────────────
+// ─── Start ──────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`[SERVER] Running on port ${PORT}`);
-  console.log(`[SERVER] REST:      http://localhost:${PORT}/health`);
-  console.log(`[SERVER] WebSocket: ws://localhost:${PORT}`);
-});
+
+async function start() {
+  // Create 100ms room first
+  await createRoom();
+
+  server.listen(PORT, () => {
+    console.log(`[SERVER] Running on port ${PORT}`);
+    console.log(`[SERVER] REST:      http://localhost:${PORT}/health`);
+    console.log(`[SERVER] WebSocket: ws://localhost:${PORT}`);
+    if (HMS_ROOM_ID) {
+      console.log(`[SERVER] 100ms Room: ${HMS_ROOM_ID}`);
+    } else {
+      console.log(`[SERVER] WARNING: No 100ms room. Video calls will not work.`);
+      console.log(`[SERVER] Create a room at https://dashboard.100ms.live`);
+      console.log(`[SERVER] Then add HMS_ROOM_ID=<id> to your .env file`);
+    }
+  });
+}
+
+start();

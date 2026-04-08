@@ -60,7 +60,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     ScheduleService.instance.init();
     SessionService.instance.init();
     await SessionService.instance.seedDemoSessions();
-    HmsService.instance.init();
+    // HmsService.build() is called lazily when a call is started
 
     // Connect to WebSocket server for cross-app sync
     await SyncService.instance.connect(user.id);

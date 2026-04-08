@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared/shared.dart';
+import 'call_screen.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -108,7 +109,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const _TrainerPreJoinFromSchedule(),
+                                builder: (_) => const PreJoinScreen(),
                               ),
                             );
                           },
@@ -157,67 +158,3 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 }
 
-class _TrainerPreJoinFromSchedule extends StatelessWidget {
-  const _TrainerPreJoinFromSchedule();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Join Session')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                height: 250,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E2E),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.videocam, color: Colors.white54, size: 64),
-                    SizedBox(height: 16),
-                    Text('Camera Preview', style: TextStyle(color: Colors.white54)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: BlocConsumer<CallBloc, CallBlocState>(
-                  listener: (context, state) {
-                    if (state is CallFailed) {
-                      context.showSnackBar(state.error, isError: true);
-                    }
-                  },
-                  builder: (context, state) {
-                    return ElevatedButton.icon(
-                      onPressed: state is CallConnecting
-                          ? null
-                          : () => context.read<CallBloc>().add(
-                                const CallJoin(
-                                  roomId: AppConstants.hmsRoomId,
-                                  role: 'trainer',
-                                ),
-                              ),
-                      icon: const Icon(Icons.videocam),
-                      label: const Text('Join as Trainer'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

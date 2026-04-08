@@ -1,90 +1,275 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:hmssdk_flutter/hmssdk_flutter.dart';
 import 'package:http/http.dart' as http;
-import '../models/models.dart';
 import '../utils/constants.dart';
 import 'log_service.dart';
 
-/// Service for 100ms video call integration.
+/// Wraps the 100ms HMSSDK for video calling.
 ///
-/// This service handles token generation, room management, and provides
-/// the interface for the UI to interact with 100ms SDK.
-/// The actual HMSSDK initialization and peer management happens in the
-/// CallBloc which holds the HMSSDK instance.
-class HmsService {
+/// Lifecycle: build → getToken → join → (call active) → leave → destroy
+class HmsService implements HMSUpdateListener, HMSActionResultListener {
   HmsService._();
   static final HmsService instance = HmsService._();
 
+  HMSSDK? _hmsSdk;
   bool _isInitialized = false;
-  String? _authToken;
-  ActiveCallState _callState = const ActiveCallState();
 
-  final _callStateController = StreamController<ActiveCallState>.broadcast();
-  Stream<ActiveCallState> get callStateStream => _callStateController.stream;
-  ActiveCallState get currentCallState => _callState;
+  // Streams for the CallBloc to listen to
+  final _onJoinController = StreamController<HMSRoom>.broadcast();
+  final _peerUpdateController =
+      StreamController<({HMSPeer peer, HMSPeerUpdate update})>.broadcast();
+  final _trackUpdateController =
+      StreamController<
+          ({HMSTrack track, HMSTrackUpdate update, HMSPeer peer})>
+          .broadcast();
+  final _errorController = StreamController<HMSException>.broadcast();
+  final _messageController = StreamController<HMSMessage>.broadcast();
+  final _reconnectController = StreamController<bool>.broadcast();
+
+  Stream<HMSRoom> get onJoinStream => _onJoinController.stream;
+  Stream<({HMSPeer peer, HMSPeerUpdate update})> get peerUpdateStream =>
+      _peerUpdateController.stream;
+  Stream<({HMSTrack track, HMSTrackUpdate update, HMSPeer peer})>
+      get trackUpdateStream => _trackUpdateController.stream;
+  Stream<HMSException> get errorStream => _errorController.stream;
+  Stream<bool> get reconnectStream => _reconnectController.stream;
+
+  HMSSDK? get sdk => _hmsSdk;
+
+  /// Build and initialize the SDK.
+  Future<void> build() async {
+    if (_isInitialized) return;
+
+    _hmsSdk = HMSSDK();
+    await _hmsSdk!.build();
+    _hmsSdk!.addUpdateListener(listener: this);
+    _isInitialized = true;
+    LogService.instance.log(AppConstants.tagRtc, 'HMSSDK built');
+  }
 
   /// Fetch auth token from token server.
   Future<String> getAuthToken({
     required String roomId,
     required String userId,
-    required String role, // 'trainer' or 'member'
+    required String role,
   }) async {
     LogService.instance.log(
       AppConstants.tagRtc,
-      'Fetching auth token for role: $role',
+      'Fetching token for role: $role',
     );
 
     try {
-      final response = await http.post(
-        Uri.parse('${AppConstants.hmsTokenServerUrl}/api/token'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'room_id': roomId,
-          'user_id': userId,
-          'role': role,
-        }),
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .post(
+            Uri.parse('${AppConstants.hmsTokenServerUrl}/api/token'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'room_id': roomId,
+              'user_id': userId,
+              'role': role,
+            }),
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _authToken = data['token'] as String;
-        LogService.instance.log(AppConstants.tagRtc, 'Auth token received');
-        return _authToken!;
-      } else {
-        throw Exception('Token server returned ${response.statusCode}');
+        final token = data['token'] as String;
+        LogService.instance.log(AppConstants.tagRtc, 'Token received');
+        return token;
       }
+      throw Exception('Token server returned ${response.statusCode}');
     } catch (e) {
-      LogService.instance.error(
-        AppConstants.tagRtc,
-        'Failed to get auth token, using mock token',
-        e,
-      );
-      // Return a mock token for local development
-      _authToken = 'mock_token_${userId}_$role';
-      return _authToken!;
+      LogService.instance.error(AppConstants.tagRtc, 'Token fetch failed', e);
+      rethrow;
     }
   }
 
-  /// Update call state.
-  void updateCallState(ActiveCallState state) {
-    _callState = state;
-    _callStateController.add(state);
+  /// Join a room.
+  Future<void> join({
+    required String token,
+    required String userName,
+  }) async {
+    final config = HMSConfig(authToken: token, userName: userName);
+    _hmsSdk?.join(config: config);
+    LogService.instance.log(AppConstants.tagRtc, 'Joining room...');
   }
 
-  /// Initialize the service.
-  void init() {
-    if (_isInitialized) return;
-    _isInitialized = true;
-    LogService.instance.log(AppConstants.tagRtc, 'HMS service initialized');
+  /// Leave the room.
+  Future<void> leave() async {
+    _hmsSdk?.leave(hmsActionResultListener: this);
+    LogService.instance.log(AppConstants.tagRtc, 'Left room');
   }
 
-  /// Reset call state.
-  void resetCallState() {
-    _callState = const ActiveCallState();
-    _callStateController.add(_callState);
+  /// Toggle local audio.
+  void toggleAudio(bool mute) {
+    _hmsSdk?.toggleMicMuteState();
+    LogService.instance.log(
+      AppConstants.tagRtc,
+      'Audio ${mute ? "muted" : "unmuted"}',
+    );
+  }
+
+  /// Toggle local video.
+  void toggleVideo(bool mute) {
+    _hmsSdk?.toggleCameraMuteState();
+    LogService.instance.log(
+      AppConstants.tagRtc,
+      'Video ${mute ? "off" : "on"}',
+    );
+  }
+
+  /// Switch camera front/back.
+  void switchCamera() {
+    _hmsSdk?.switchCamera();
+    LogService.instance.log(AppConstants.tagRtc, 'Camera switched');
+  }
+
+  /// Destroy the SDK.
+  Future<void> destroy() async {
+    _hmsSdk?.removeUpdateListener(listener: this);
+    _hmsSdk?.destroy();
+    _hmsSdk = null;
+    _isInitialized = false;
+    LogService.instance.log(AppConstants.tagRtc, 'HMSSDK destroyed');
+  }
+
+  // ─── HMSUpdateListener ─────────────────────────────────────
+
+  @override
+  void onJoin({required HMSRoom room}) {
+    LogService.instance.log(AppConstants.tagRtc, 'Joined room: ${room.id}');
+    _onJoinController.add(room);
+  }
+
+  @override
+  void onPeerUpdate({required HMSPeer peer, required HMSPeerUpdate update}) {
+    LogService.instance.log(
+      AppConstants.tagRtc,
+      'Peer update: ${peer.name}',
+    );
+    _peerUpdateController.add((peer: peer, update: update));
+  }
+
+  @override
+  void onTrackUpdate({
+    required HMSTrack track,
+    required HMSTrackUpdate trackUpdate,
+    required HMSPeer peer,
+  }) {
+    LogService.instance.log(
+      AppConstants.tagRtc,
+      'Track update: ${peer.name} (${track.kind.name})',
+    );
+    _trackUpdateController.add((
+      track: track,
+      update: trackUpdate,
+      peer: peer,
+    ));
+  }
+
+  @override
+  void onHMSError({required HMSException error}) {
+    LogService.instance.error(
+      AppConstants.tagRtc,
+      'HMS error [${error.code}]: ${error.message ?? ''} ${error.description ?? ''}',
+    );
+    _errorController.add(error);
+  }
+
+  @override
+  void onMessage({required HMSMessage message}) {
+    _messageController.add(message);
+  }
+
+  @override
+  void onReconnecting() {
+    LogService.instance.log(AppConstants.tagRtc, 'Reconnecting...');
+    _reconnectController.add(true);
+  }
+
+  @override
+  void onReconnected() {
+    LogService.instance.log(AppConstants.tagRtc, 'Reconnected');
+    _reconnectController.add(false);
+  }
+
+  @override
+  void onRoomUpdate({required HMSRoom room, required HMSRoomUpdate update}) {}
+
+  @override
+  void onUpdateSpeakers({required List<HMSSpeaker> updateSpeakers}) {}
+
+  @override
+  void onRoleChangeRequest(
+      {required HMSRoleChangeRequest roleChangeRequest}) {}
+
+  @override
+  void onChangeTrackStateRequest(
+      {required HMSTrackChangeRequest hmsTrackChangeRequest}) {}
+
+  @override
+  void onRemovedFromRoom(
+      {required HMSPeerRemovedFromPeer hmsPeerRemovedFromPeer}) {}
+
+  @override
+  void onAudioDeviceChanged(
+      {HMSAudioDevice? currentAudioDevice,
+      List<HMSAudioDevice>? availableAudioDevice}) {}
+
+  @override
+  void onSessionStoreAvailable(
+      {HMSSessionStore? hmsSessionStore}) {}
+
+  @override
+  void onPeerListUpdate(
+      {required List<HMSPeer> addedPeers,
+      required List<HMSPeer> removedPeers}) {
+    for (final peer in addedPeers) {
+      if (!peer.isLocal) {
+        _peerUpdateController
+            .add((peer: peer, update: HMSPeerUpdate.peerJoined));
+      }
+    }
+    for (final peer in removedPeers) {
+      if (!peer.isLocal) {
+        _peerUpdateController
+            .add((peer: peer, update: HMSPeerUpdate.peerLeft));
+      }
+    }
+  }
+
+  // ─── HMSActionResultListener ───────────────────────────────
+
+  @override
+  void onSuccess(
+      {HMSActionResultListenerMethod methodType =
+          HMSActionResultListenerMethod.unknown,
+      Map<String, dynamic>? arguments}) {
+    LogService.instance.log(
+      AppConstants.tagRtc,
+      'Action success: ${methodType.name}',
+    );
+  }
+
+  @override
+  void onException(
+      {HMSActionResultListenerMethod methodType =
+          HMSActionResultListenerMethod.unknown,
+      Map<String, dynamic>? arguments,
+      required HMSException hmsException}) {
+    LogService.instance.error(
+      AppConstants.tagRtc,
+      'Action failed: ${methodType.name} - ${hmsException.message}',
+    );
   }
 
   void dispose() {
-    _callStateController.close();
+    _onJoinController.close();
+    _peerUpdateController.close();
+    _trackUpdateController.close();
+    _errorController.close();
+    _messageController.close();
+    _reconnectController.close();
   }
 }
